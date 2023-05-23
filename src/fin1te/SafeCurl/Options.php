@@ -54,6 +54,8 @@ class Options {
                                'domain' => array(),
                                'scheme' => array());
 
+	private $headers = [];
+
     /**
      * @return fin1te\SafeCurl\Options
      */
@@ -350,5 +352,13 @@ class Options {
         $this->{$list}[$type] = array_diff($this->{$list}[$type], $values);
 
         return $this;
+    }
+
+    public function setHeaders($headers) {
+        $this->headers = $headers;
+    }
+
+    public function getHeaders() {
+        return $this->headers;
     }
 }

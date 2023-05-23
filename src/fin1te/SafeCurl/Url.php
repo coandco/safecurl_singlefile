@@ -49,17 +49,20 @@ class Url {
         $parts['ips'] = self::resolveHostname($parts['host']);
 
         //Validate the host
-        $parts['host'] = self::validateHostname($parts['host'], $parts['ips'], $options);
+        $host = self::validateHostname($parts['host'], $parts['ips'], $options);
         if ($options->getPinDns()) {
             //Since we're pinning DNS, we replace the host in the URL
             //with an IP, then get cURL to send the Host header
             $parts['host'] = $parts['ips'][0]; 
         }
+        else {
+            $parts['host'] = $host;
+        }
 
         //Rebuild the URL
         $cleanUrl = self::buildUrl($parts);
 
-        return array('originalUrl' => $url, 'cleanUrl' => $cleanUrl, 'parts' => $parts);
+        return array('originalUrl' => $url, 'cleanUrl' => $cleanUrl, 'parts' => $parts, 'host' => $host);
     }
 
     /**

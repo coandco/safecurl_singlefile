@@ -56,10 +56,9 @@ class SafeCurl {
      */
     public function setCurlHandle($curlHandle) {
         if (!((is_resource($curlHandle) && get_resource_type($curlHandle) === 'curl') || (class_exists('CurlHandle') && $curlHandle instanceof CurlHandle))) {
-            //Need a valid cURL resource, throw exception
             throw new Exception("SafeCurl expects a valid cURL resource - '" . gettype($curlHandle) . "' provided.");
         }
-         $this->curlHandle = $curlHandle;
+        $this->curlHandle = $curlHandle;
     }
 
     /**
@@ -129,9 +128,10 @@ class SafeCurl {
                 throw new InvalidURLException("Credentials passed in but 'sendCredentials' is set to false");
             }
 
+            $headers = $safeCurl->getOptions()->getHeaders();
             if ($safeCurl->getOptions()->getPinDns()) {
                 //Send a Host header
-                curl_setopt($curlHandle, CURLOPT_HTTPHEADER, array('Host: ' . $url['parts']['host']));
+                $headers[] = 'Host: ' . $url['host'];
                 //The "fake" URL
                 curl_setopt($curlHandle, CURLOPT_URL, $url['cleanUrl']);
                 //We also have to disable SSL cert verfication, which is not great
@@ -140,6 +140,11 @@ class SafeCurl {
             } else {
                 curl_setopt($curlHandle, CURLOPT_URL, $url['cleanUrl']);
             }
+
+            curl_setopt($curlHandle, CURLOPT_HTTPHEADER, $headers);
+
+            // in case of `CURLINFO_REDIRECT_URL` isn't defined
+            curl_setopt($curlHandle, CURLOPT_HEADER, true);
 
             //Execute the cURL request
             $response = curl_exec($curlHandle);
