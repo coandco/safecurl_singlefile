@@ -146,7 +146,7 @@ class SafeCurl {
         $redirectLimit  = $safeCurl->getOptions()->getFollowLocationLimit();
         $followLocation = $safeCurl->getOptions()->getFollowLocation();
         do {
-			$safeCurl->prepareCurl($url);
+			$safeCurl->prepare($url);
             // in case of `CURLINFO_REDIRECT_URL` isn't defined
             curl_setopt($curlHandle, CURLOPT_HEADER, true);
 
