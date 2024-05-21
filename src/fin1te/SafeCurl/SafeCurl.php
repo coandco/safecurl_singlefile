@@ -111,9 +111,10 @@ class SafeCurl {
 			$host = $url['host'];
 			if (strpos($host, ':') !== false)
 				throw new InvalidURLException("Malformed hostname: {$host}");
-			$resolutions = array_map(function ($ip) use ($host, $port) {
+			$ips = implode(',', $url['ips']);
+			$resolutions = array_map(function ($port) use ($host, $ips) {
 				return "{$host}:{$port}:{$ip}";
-			}, $url['ips']);
+			}, $options->getList('whitelist', 'port'));
 			if (!curl_setopt($this->curlHandle, CURLOPT_RESOLVE, $resolutions))
 				throw new Exception("Unable to override cURL DNS resolution");
         }

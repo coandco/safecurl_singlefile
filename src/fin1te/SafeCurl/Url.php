@@ -226,7 +226,7 @@ class Url {
 			return;
 		foreach ($records as $record) {
 			$ip = $record[$ipField] ?? null;
-			if ($ip !== null)
+			if ($ip !== null && strpos($ip, ',') === false)
 				$ips[] = $ip;
 		}
 	}
