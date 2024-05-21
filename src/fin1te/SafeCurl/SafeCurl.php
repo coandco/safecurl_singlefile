@@ -96,6 +96,32 @@ class SafeCurl {
         }
     }
 
+	public function prepare(string $url) {
+        //Validate the URL
+        $url = Url::validateUrl($url, $safeCurl->getOptions());
+
+        //Are there credentials, but we don't want to send them?
+        if (!$this->getOptions()->getSendCredentials() &&
+            (array_key_exists('user', $url) || array_key_exists('pass', $url))) {
+            throw new InvalidURLException("Credentials passed in but 'sendCredentials' is set to false");
+        }
+
+        $headers = $this->getOptions()->getHeaders();
+        if ($this->getOptions()->getPinDns()) {
+			$host = $url['host'];
+			if (strpos($host, ':') !== false)
+				throw new InvalidURLException("Malformed hostname: {$host}");
+			$resolutions = array_map(function ($ip) use ($host, $port) {
+				return "{$host}:{$port}:{$ip}";
+			}, $url['ips']);
+			if (!curl_setopt($this->curlHandle, CURLOPT_RESOLVE, $resolutions))
+				throw new Exception("Unable to override cURL DNS resolution");
+        }
+
+		curl_setopt($this->curlHandle, CURLOPT_URL, $url['cleanUrl']);
+        curl_setopt($this->curlHandle, CURLOPT_HTTPHEADER, $headers);
+	}
+
     /**
      * Exectutes a cURL request, whilst checking that the
      * URL abides by our whitelists/blacklists
@@ -119,30 +145,7 @@ class SafeCurl {
         $redirectLimit  = $safeCurl->getOptions()->getFollowLocationLimit();
         $followLocation = $safeCurl->getOptions()->getFollowLocation();
         do {
-            //Validate the URL
-            $url = Url::validateUrl($url, $safeCurl->getOptions());
-
-            //Are there credentials, but we don't want to send them?
-            if (!$safeCurl->getOptions()->getSendCredentials() &&
-                (array_key_exists('user', $url) || array_key_exists('pass', $url))) {
-                throw new InvalidURLException("Credentials passed in but 'sendCredentials' is set to false");
-            }
-
-            $headers = $safeCurl->getOptions()->getHeaders();
-            if ($safeCurl->getOptions()->getPinDns()) {
-				$host = $url['host'];
-				if (strpos($host, ':') !== false)
-					throw new InvalidURLException("Malformed hostname: {$host}");
-				$resolutions = array_map(function ($ip) use ($host, $port) {
-					return "{$host}:{$port}:{$ip}";
-				}, $url['ips']);
-				if (!curl_setopt($curlHandle, CURLOPT_RESOLVE, $resolutions))
-					throw new Exception("Unable to override cURL DNS resolution");
-            }
-
-			curl_setopt($curlHandle, CURLOPT_URL, $url['cleanUrl']);
-            curl_setopt($curlHandle, CURLOPT_HTTPHEADER, $headers);
-
+			$safeCurl->prepareCurl($url);
             // in case of `CURLINFO_REDIRECT_URL` isn't defined
             curl_setopt($curlHandle, CURLOPT_HEADER, true);
 
