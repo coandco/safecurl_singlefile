@@ -46,23 +46,17 @@ class Url {
         }
 
         //Reolve host to ip(s)
-        $parts['ips'] = self::resolveHostname($parts['host']);
+        $ips = self::resolveHostname($parts['host']);
+		$parts['ips'] = $ips;
 
         //Validate the host
-        $host = self::validateHostname($parts['host'], $parts['ips'], $options);
-        if ($options->getPinDns()) {
-            //Since we're pinning DNS, we replace the host in the URL
-            //with an IP, then get cURL to send the Host header
-            $parts['host'] = $parts['ips'][0]; 
-        }
-        else {
-            $parts['host'] = $host;
-        }
+        $host = self::validateHostname($parts['host'], $ips, $options);
+        $parts['host'] = $host;
 
         //Rebuild the URL
         $cleanUrl = self::buildUrl($parts);
 
-        return array('originalUrl' => $url, 'cleanUrl' => $cleanUrl, 'parts' => $parts, 'host' => $host);
+        return array('originalUrl' => $url, 'cleanUrl' => $cleanUrl, 'parts' => $parts, 'host' => $host, 'ips' => $ips);
     }
 
     /**
@@ -226,6 +220,17 @@ class Url {
         return $url;
     }
 
+	private static function getIps(string $hostname, int $recordType, string $ipField, array &$ips) : void {
+		$records = dns_get_record($hostname, $recordType);
+		if ($records === false)
+			return;
+		foreach ($records as $record) {
+			$ip = $record[$ipField] ?? null;
+			if ($ip !== null)
+				$ips[] = $ip;
+		}
+	}
+
     /**
      * Resolves a hostname to its IP(s)
      *
@@ -234,11 +239,11 @@ class Url {
      * @return array
      */
     public static function resolveHostname($hostname) {
-        $ips = @gethostbynamel($hostname);
-        if (empty($ips)) {
-            throw new InvalidDomainException("Provided hostname '$hostname' doesn't resolve to an IP address");
-        }
-
+		$ips = [];
+		self::getIps($hostname, DNS_A, 'ip', $ips);
+		self::getIps($hostname, DNS_AAAA, 'ipv6', $ips);
+        if (empty($ips))
+            throw new InvalidDomainException("Provided hostname '{$hostname}' could not be resolved to an IP address");
         return $ips;
     }
 

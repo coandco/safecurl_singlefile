@@ -130,17 +130,17 @@ class SafeCurl {
 
             $headers = $safeCurl->getOptions()->getHeaders();
             if ($safeCurl->getOptions()->getPinDns()) {
-                //Send a Host header
-                $headers[] = 'Host: ' . $url['host'];
-                //The "fake" URL
-                curl_setopt($curlHandle, CURLOPT_URL, $url['cleanUrl']);
-                //We also have to disable SSL cert verfication, which is not great
-                //Might be possible to manually check the certificate ourselves?
-                curl_setopt($curlHandle, CURLOPT_SSL_VERIFYPEER, false);
-            } else {
-                curl_setopt($curlHandle, CURLOPT_URL, $url['cleanUrl']);
+				$host = $url['host'];
+				if (strpos($host, ':') !== false)
+					throw new InvalidURLException("Malformed hostname: {$host}");
+				$resolutions = array_map(function ($ip) use ($host, $port) {
+					return "{$host}:{$port}:{$ip}";
+				}, $url['ips']);
+				if (!curl_setopt($curlHandle, CURLOPT_RESOLVE, $resolutions))
+					throw new Exception("Unable to override cURL DNS resolution");
             }
 
+			curl_setopt($curlHandle, CURLOPT_URL, $url['cleanUrl']);
             curl_setopt($curlHandle, CURLOPT_HTTPHEADER, $headers);
 
             // in case of `CURLINFO_REDIRECT_URL` isn't defined
