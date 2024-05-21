@@ -98,7 +98,7 @@ class SafeCurl {
 
 	public function prepare(string $url) {
         //Validate the URL
-        $url = Url::validateUrl($url, $safeCurl->getOptions());
+        $url = Url::validateUrl($url, $this->getOptions());
 
         //Are there credentials, but we don't want to send them?
         if (!$this->getOptions()->getSendCredentials() &&
