@@ -98,23 +98,23 @@ class SafeCurl {
 
 	public function prepare(string $url) {
         //Validate the URL
-        $url = Url::validateUrl($url, $this->getOptions());
+        $url = Url::validateUrl($url, $this->options);
 
         //Are there credentials, but we don't want to send them?
-        if (!$this->getOptions()->getSendCredentials() &&
+        if (!$this->options->getSendCredentials() &&
             (array_key_exists('user', $url) || array_key_exists('pass', $url))) {
             throw new InvalidURLException("Credentials passed in but 'sendCredentials' is set to false");
         }
 
-        $headers = $this->getOptions()->getHeaders();
-        if ($this->getOptions()->getPinDns()) {
+        $headers = $this->options->getHeaders();
+        if ($this->options->getPinDns()) {
 			$host = $url['host'];
 			if (strpos($host, ':') !== false)
 				throw new InvalidURLException("Malformed hostname: {$host}");
 			$ips = implode(',', $url['ips']);
 			$resolutions = array_map(function ($port) use ($host, $ips) {
 				return "{$host}:{$port}:{$ip}";
-			}, $options->getList('whitelist', 'port'));
+			}, $this->options->getList('whitelist', 'port'));
 			if (!curl_setopt($this->curlHandle, CURLOPT_RESOLVE, $resolutions))
 				throw new Exception("Unable to override cURL DNS resolution");
         }
