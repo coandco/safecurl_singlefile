@@ -158,7 +158,7 @@ class Url {
 							continue;
         	            if ($cidrMatch($ip, $blacklistedIp)) {
         	                throw new InvalidIpException("Provided hostname '$hostname' resolves to '" . implode(', ', $ips) 
-        	                                           . "', which matches a blacklisted value: " . $blacklistedIp);
+        	                                           . "', {$ip} matches a blacklisted value: " . $blacklistedIp);
         	            }
         	        }
         	    }
