@@ -123,39 +123,47 @@ class Url {
             throw new InvalidDomainException("Provided hostname '$hostname' matches a blacklisted value");
         }
 
-        $whitelistedIps = $options->getList('whitelist', 'ip');
+		foreach (Options::IP_LISTS as $ipType => $listName) {
+			$cidrMatch = self::getCidrMatchFunction($ipType);
 
-        if (!empty($whitelistedIps)) {
-            $valid = false;
+			$whitelistedIps = $options->getList('whitelist', $listName);
 
-            foreach ($whitelistedIps as $whitelistedIp) {
-                foreach ($ips as $ip) {
-                    if (self::cidrMatch($ip, $whitelistedIp)) {
-                        $valid = true;
-                        break 2;
-                    }
-                }
-            }
+        	if (!empty($whitelistedIps)) {
+        	    $valid = false;
 
-            if (!$valid) {
-                throw new InvalidIpException("Provided hostname '$hostname' resolves to '" . implode(', ', $ips) 
-                                           . "', which doesn't match whitelisted values: "
-                                           . implode(', ', $whitelistedIps));
-            }
-        }
+        	    foreach ($whitelistedIps as $whitelistedIp) {
+        	        foreach ($ips as $ip) {
+						if ($ip->getType() != $ipType)
+							continue;
+        	            if ($cidrMatch($ip, $whitelistedIp)) {
+        	                $valid = true;
+        	                break 2;
+        	            }
+        	        }
+        	    }
 
-        $blacklistedIps = $options->getList('blacklist', 'ip');
+        	    if (!$valid) {
+        	        throw new InvalidIpException("Provided hostname '$hostname' resolves to '" . implode(', ', $ips) 
+        	                                   . "', which doesn't match whitelisted values: "
+        	                                   . implode(', ', $whitelistedIps));
+        	    }
+        	}
 
-        if (!empty($blacklistedIps)) {
-            foreach ($blacklistedIps as $blacklistedIp) {
-                foreach ($ips as $ip) {
-                    if (self::cidrMatch($ip, $blacklistedIp)) {
-                        throw new InvalidIpException("Provided hostname '$hostname' resolves to '" . implode(', ', $ips) 
-                                                   . "', which matches a blacklisted value: " . $blacklistedIp);
-                    }
-                }
-            }
-        }
+        	$blacklistedIps = $options->getList('blacklist', $listName);
+
+        	if (!empty($blacklistedIps)) {
+        	    foreach ($blacklistedIps as $blacklistedIp) {
+        	        foreach ($ips as $ip) {
+						if ($ip->getType() != $ipType)
+							continue;
+        	            if ($cidrMatch($ip, $blacklistedIp)) {
+        	                throw new InvalidIpException("Provided hostname '$hostname' resolves to '" . implode(', ', $ips) 
+        	                                           . "', which matches a blacklisted value: " . $blacklistedIp);
+        	            }
+        	        }
+        	    }
+			}
+		}
 
         return $hostname;
     }
@@ -220,14 +228,14 @@ class Url {
         return $url;
     }
 
-	private static function getIps(string $hostname, int $recordType, string $ipField, array &$ips) : void {
+	private static function getIps(string $hostname, int $recordType, string $ipField, int $ipType, array &$ips) : void {
 		$records = dns_get_record($hostname, $recordType);
 		if ($records === false)
 			return;
 		foreach ($records as $record) {
 			$ip = $record[$ipField] ?? null;
 			if ($ip !== null && strpos($ip, ',') === false)
-				$ips[] = $ip;
+				$ips[] = new IpAddress($ip, $type);
 		}
 	}
 
@@ -240,8 +248,8 @@ class Url {
      */
     public static function resolveHostname($hostname) {
 		$ips = [];
-		self::getIps($hostname, DNS_A, 'ip', $ips);
-		self::getIps($hostname, DNS_AAAA, 'ipv6', $ips);
+		self::getIps($hostname, DNS_A, 'ip', IpAddress::TYPE_IPV4, $ips);
+		self::getIps($hostname, DNS_AAAA, 'ipv6', IpAddress::TYPE_IPV6, $ips);
         if (empty($ips))
             throw new InvalidDomainException("Provided hostname '{$hostname}' could not be resolved to an IP address");
         return $ips;
@@ -256,7 +264,7 @@ class Url {
      *
      * @return bool
      */
-    public static function cidrMatch($ip, $cidr) {
+    public static function cidrMatch(IpAddress $ip, $cidr) {
         if (strpos($cidr, '/') === false) {
             //It doesn't have a prefix, just a straight IP match
             return $ip == $cidr;
@@ -269,4 +277,32 @@ class Url {
 
         return false;
     }
+
+	public static function cidrMatchIpv6(IpAddress $ip, $cidr) {
+		list($prefix, $mask) = explode('/', $cidr, 2);
+		$prefixBinary = inet_pton($prefix);
+		if ($prefixBinary === false)
+			throw new Exception("Invalid IPv6 CIDR prefix: {$prefix}");
+		$ipBinary = inet_pton($ip);
+		if ($ipBinary === false)
+			throw new InvalidIPException("Invalid IPv6 Address: {$ip}");
+		if (!ctype_digit($mask))
+			throw new Exception("Invalid IPv6 CIDR mask: {$mask}");
+		$mask = (int) $mask;
+		$length = strlen($prefixBinary);
+		if ($length !== strlen($ipBinary) || $mask > $length)
+			throw new Exception("CIDR mask exceeds address length: {$mask}");
+		$prefixLength = $length - $mask;
+		return substr($ipBinary, 0, $prefixLength) === substr($prefixBinary, 0, $prefixLength);
+	}
+
+	public static function getCidrMatchFunction(int $ipType) {
+		switch($ipType) {
+		case IpAddress::TYPE_IPV6:
+			return [self, 'cidrMatchIpv6'];
+		case IpAddress::TYPE_IPV4:
+		default:
+			return [self, 'cidrMatch'];
+		}
+	}
 }

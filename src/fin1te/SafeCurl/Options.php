@@ -4,6 +4,12 @@ namespace fin1te\SafeCurl;
 use fin1te\SafeCurl\Exception\InvalidOptionException;
 
 class Options {
+
+	const IP_LISTS = [
+		IpAddress::TYPE_IPV4 => 'ip',
+		IpAddress::TYPE_IPV6 => 'ipv6'
+	];
+
     /**
      * @var bool Follow HTTP redirects
      */
@@ -28,6 +34,7 @@ class Options {
      * @var array
      */
     private $whitelist = array('ip'     => array(),
+							   'ipv6'   => array(),
                                'port'   => array('80', '443', '8080'),
                                'domain' => array(),
                                'scheme' => array('http', 'https'));
@@ -50,6 +57,31 @@ class Options {
                                                  '203.0.113.0/24',
                                                  '224.0.0.0/4',
                                                  '240.0.0.0/4'),
+							   'ipv6'	=> array(
+												 '::1/128',
+								   				 '::/128',
+								   				 '::ffff:0:0/96',
+								   				 '64:ff9b::/96',
+								   				 '64:ff9b:1::/48',
+								   				 '100::/64',
+								   				 '2001::/23',
+								   				 '2001::/32',
+								   				 '2001:1::1/128',
+								   				 '2001:1::2/128',
+								   				 '2001:1::3/128',
+								   				 '2001:2::/48',
+								   				 '2001:3::/32',
+								   				 '2001:4:112::/48',
+								   				 '2001:10::/28',
+								   				 '2001:20::/28',
+								   				 '2001:30::/28',
+								   				 '2001:db8::/32',
+								   				 '2002::/16',
+								   				 '2620:4f:8000::/48',
+								   				 '5f00::/16',
+								   				 'fc00::/7',
+								   				 'fe80::/10'
+										),
                                'port'   => array(),
                                'domain' => array(),
                                'scheme' => array());
