@@ -292,11 +292,27 @@ class Url {
 		$length = strlen($prefixBinary);
 		if ($length !== strlen($ipBinary))
 			throw new Exception("CIDR prefix does not match address length: {$prefix}, IP: {$ip}");
-		$length *= 8; //Bits
-		if ($mask > $length)
-			throw new Exception("CIDR mask exceeds address length({$length}): {$mask}, IP: {$ip}, CIDR: {$cidr}");
-		$prefixLength = $length - $mask;
-		return substr($ipBinary, 0, $prefixLength) === substr($prefixBinary, 0, $prefixLength);
+		$bits = $length * 8;
+		if ($mask > $bits)
+			throw new Exception("CIDR mask exceeds address length({$bits}): {$mask}, IP: {$ip}, CIDR: {$cidr}");
+		$remaining = $mask;
+		for ($i = 0; $i < $length; $i++) {
+			$a = chr($prefixBinary[$i]);
+			$b = chr($$ipBinary[$i]);
+			if ($mask <= 0) {
+				return true;
+			}
+			else if ($bits >= 8) {
+				if ($a != $b)
+					return false;
+				$bits -= 8;
+			}
+			else {
+				$shift = 8 - $bits;
+				return ($a >> $shift) == ($b >> $shift);
+			}
+		}
+		throw new Exception("Zero length IP or CIDR specified, IP: {$ip}, CIDR: {$cidr}");
 	}
 
 	public static function getCidrMatchFunction(int $ipType) {
