@@ -91,7 +91,7 @@ class Options {
                                'domain' => array(),
                                'scheme' => array());
 
-	private $headers = [];
+	private $headers = null;
 
     /**
      * @return fin1te\SafeCurl\Options
@@ -391,7 +391,7 @@ class Options {
         return $this;
     }
 
-    public function setHeaders($headers) {
+    public function setHeaders(?array $headers) {
         $this->headers = $headers;
     }
 

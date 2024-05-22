@@ -106,7 +106,6 @@ class SafeCurl {
             throw new InvalidURLException("Credentials passed in but 'sendCredentials' is set to false");
         }
 
-        $headers = $this->options->getHeaders();
         if ($this->options->getPinDns()) {
 			$host = $url['host'];
 			if (strpos($host, ':') !== false)
@@ -120,7 +119,9 @@ class SafeCurl {
         }
 
 		curl_setopt($this->curlHandle, CURLOPT_URL, $url['cleanUrl']);
-        curl_setopt($this->curlHandle, CURLOPT_HTTPHEADER, $headers);
+        $headers = $this->options->getHeaders();
+		if ($headers !== null)
+			curl_setopt($this->curlHandle, CURLOPT_HTTPHEADER, $headers);
 	}
 
     /**
