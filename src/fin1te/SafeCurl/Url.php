@@ -290,7 +290,10 @@ class Url {
 			throw new Exception("Invalid IPv6 CIDR mask: {$mask}");
 		$mask = (int) $mask;
 		$length = strlen($prefixBinary);
-		if ($length !== strlen($ipBinary) || $mask > $length)
+		if ($length !== strlen($ipBinary))
+			throw new Exception("CIDR prefix does not match address length: {$prefix}, IP: {$ip}");
+		$length *= 8; //Bits
+		if ($mask > $length)
 			throw new Exception("CIDR mask exceeds address length({$length}): {$mask}, IP: {$ip}, CIDR: {$cidr}");
 		$prefixLength = $length - $mask;
 		return substr($ipBinary, 0, $prefixLength) === substr($prefixBinary, 0, $prefixLength);
