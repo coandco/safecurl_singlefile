@@ -291,7 +291,7 @@ class Url {
 		$mask = (int) $mask;
 		$length = strlen($prefixBinary);
 		if ($length !== strlen($ipBinary) || $mask > $length)
-			throw new Exception("CIDR mask exceeds address length: {$mask}");
+			throw new Exception("CIDR mask exceeds address length({$length}: {$mask}");
 		$prefixLength = $length - $mask;
 		return substr($ipBinary, 0, $prefixLength) === substr($prefixBinary, 0, $prefixLength);
 	}
