@@ -299,10 +299,10 @@ class Url {
 	public static function getCidrMatchFunction(int $ipType) {
 		switch($ipType) {
 		case IpAddress::TYPE_IPV6:
-			return [self, 'cidrMatchIpv6'];
+			return [self::class, 'cidrMatchIpv6'];
 		case IpAddress::TYPE_IPV4:
 		default:
-			return [self, 'cidrMatch'];
+			return [self::class, 'cidrMatch'];
 		}
 	}
 }
