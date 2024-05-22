@@ -235,7 +235,7 @@ class Url {
 		foreach ($records as $record) {
 			$ip = $record[$ipField] ?? null;
 			if ($ip !== null && strpos($ip, ',') === false)
-				$ips[] = new IpAddress($ip, $type);
+				$ips[] = new IpAddress($ip, $ipType);
 		}
 	}
 
