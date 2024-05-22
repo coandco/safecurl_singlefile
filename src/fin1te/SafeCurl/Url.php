@@ -297,8 +297,8 @@ class Url {
 			throw new Exception("CIDR mask exceeds address length({$bits}): {$mask}, IP: {$ip}, CIDR: {$cidr}");
 		$remaining = $mask;
 		for ($i = 0; $i < $length; $i++) {
-			$a = chr($prefixBinary[$i]);
-			$b = chr($$ipBinary[$i]);
+			$a = ord($prefixBinary[$i]);
+			$b = ord($$ipBinary[$i]);
 			if ($mask <= 0) {
 				return true;
 			}
