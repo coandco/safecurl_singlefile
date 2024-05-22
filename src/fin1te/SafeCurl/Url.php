@@ -298,7 +298,7 @@ class Url {
 		$remaining = $mask;
 		for ($i = 0; $i < $length; $i++) {
 			$a = ord($prefixBinary[$i]);
-			$b = ord($$ipBinary[$i]);
+			$b = ord($ipBinary[$i]);
 			if ($mask <= 0) {
 				return true;
 			}
