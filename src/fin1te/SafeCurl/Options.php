@@ -4,6 +4,55 @@ namespace fin1te\SafeCurl;
 use fin1te\SafeCurl\Exception\InvalidOptionException;
 
 class Options {
+
+	const IP_LISTS = [
+		IpAddress::TYPE_IPV4 => 'ip',
+		IpAddress::TYPE_IPV6 => 'ipv6'
+	];
+
+	const DEFAULT_IP_BLACKLIST = [
+		'0.0.0.0/8',
+		'10.0.0.0/8',
+		'100.64.0.0/10',
+		'127.0.0.0/8',
+		'169.254.0.0/16',
+		'172.16.0.0/12',
+		'192.0.0.0/29',
+		'192.0.2.0/24',
+		'192.88.99.0/24',
+		'192.168.0.0/16',
+		'198.18.0.0/15',
+		'198.51.100.0/24',
+		'203.0.113.0/24',
+		'224.0.0.0/4',
+		'240.0.0.0/4'
+	];
+	const DEFAULT_IPV6_BLACKLIST = [
+		'::1/128',
+		'::/128',
+		'::ffff:0:0/96',
+		'64:ff9b::/96',
+		'64:ff9b:1::/48',
+		'100::/64',
+		'2001::/23',
+		'2001::/32',
+		'2001:1::1/128',
+		'2001:1::2/128',
+		'2001:1::3/128',
+		'2001:2::/48',
+		'2001:3::/32',
+		'2001:4:112::/48',
+		'2001:10::/28',
+		'2001:20::/28',
+		'2001:30::/28',
+		'2001:db8::/32',
+		'2002::/16',
+		'2620:4f:8000::/48',
+		'5f00::/16',
+		'fc00::/7',
+		'fe80::/10'
+	];
+
     /**
      * @var bool Follow HTTP redirects
      */
@@ -28,6 +77,7 @@ class Options {
      * @var array
      */
     private $whitelist = array('ip'     => array(),
+							   'ipv6'   => array(),
                                'port'   => array('80', '443', '8080'),
                                'domain' => array(),
                                'scheme' => array('http', 'https'));
@@ -35,24 +85,13 @@ class Options {
     /**
      * @var array
      */
-    private $blacklist = array('ip'     => array('0.0.0.0/8',
-                                                 '10.0.0.0/8',
-                                                 '100.64.0.0/10',
-                                                 '127.0.0.0/8',
-                                                 '169.254.0.0/16',
-                                                 '172.16.0.0/12',
-                                                 '192.0.0.0/29',
-                                                 '192.0.2.0/24',
-                                                 '192.88.99.0/24',
-                                                 '192.168.0.0/16',
-                                                 '198.18.0.0/15',
-                                                 '198.51.100.0/24',
-                                                 '203.0.113.0/24',
-                                                 '224.0.0.0/4',
-                                                 '240.0.0.0/4'),
+    private $blacklist = array('ip'     => self::DEFAULT_IP_BLACKLIST,
+							   'ipv6'	=> self::DEFAULT_IPV6_BLACKLIST,
                                'port'   => array(),
                                'domain' => array(),
                                'scheme' => array());
+
+	private $headers = null;
 
     /**
      * @return fin1te\SafeCurl\Options
@@ -350,5 +389,13 @@ class Options {
         $this->{$list}[$type] = array_diff($this->{$list}[$type], $values);
 
         return $this;
+    }
+
+    public function setHeaders(?array $headers) {
+        $this->headers = $headers;
+    }
+
+    public function getHeaders() {
+        return $this->headers;
     }
 }

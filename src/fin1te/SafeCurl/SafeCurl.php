@@ -1,6 +1,7 @@
 <?php
 namespace fin1te\SafeCurl;
 
+use CurlHandle;
 use fin1te\SafeCurl\Exception;
 use fin1te\SafeCurl\Exception\InvalidURLException;
 use fin1te\SafeCurl\Exception\InvalidURLException\InvalidDomainException;
@@ -12,7 +13,7 @@ class SafeCurl {
     /**
      * cURL Handle
      *
-     * @var resource
+     * @var resource|CurlHandle
      */
     private $curlHandle;
 
@@ -54,11 +55,10 @@ class SafeCurl {
      * @param $curlHandle resource
      */
     public function setCurlHandle($curlHandle) {
-         if (!is_resource($curlHandle) || get_resource_type($curlHandle) != 'curl') {
-            //Need a valid cURL resource, throw exception
+        if (!((is_resource($curlHandle) && get_resource_type($curlHandle) === 'curl') || (class_exists('CurlHandle') && $curlHandle instanceof CurlHandle))) {
             throw new Exception("SafeCurl expects a valid cURL resource - '" . gettype($curlHandle) . "' provided.");
         }
-         $this->curlHandle = $curlHandle;
+        $this->curlHandle = $curlHandle;
     }
 
     /**
@@ -96,6 +96,34 @@ class SafeCurl {
         }
     }
 
+	public function prepare(string $url) {
+        //Validate the URL
+        $url = Url::validateUrl($url, $this->options);
+
+        //Are there credentials, but we don't want to send them?
+        if (!$this->options->getSendCredentials() &&
+            (array_key_exists('user', $url) || array_key_exists('pass', $url))) {
+            throw new InvalidURLException("Credentials passed in but 'sendCredentials' is set to false");
+        }
+
+        if ($this->options->getPinDns()) {
+			$host = $url['host'];
+			if (strpos($host, ':') !== false)
+				throw new InvalidURLException("Malformed hostname: {$host}");
+			$ips = implode(',', $url['ips']);
+			$resolutions = array_map(function ($port) use ($host, $ips) {
+				return "{$host}:{$port}:{$ips}";
+			}, $this->options->getList('whitelist', 'port'));
+			if (!curl_setopt($this->curlHandle, CURLOPT_RESOLVE, $resolutions))
+				throw new Exception("Unable to override cURL DNS resolution");
+        }
+
+		curl_setopt($this->curlHandle, CURLOPT_URL, $url['cleanUrl']);
+        $headers = $this->options->getHeaders();
+		if ($headers !== null)
+			curl_setopt($this->curlHandle, CURLOPT_HTTPHEADER, $headers);
+	}
+
     /**
      * Exectutes a cURL request, whilst checking that the
      * URL abides by our whitelists/blacklists
@@ -119,26 +147,9 @@ class SafeCurl {
         $redirectLimit  = $safeCurl->getOptions()->getFollowLocationLimit();
         $followLocation = $safeCurl->getOptions()->getFollowLocation();
         do {
-            //Validate the URL
-            $url = Url::validateUrl($url, $safeCurl->getOptions());
-
-            //Are there credentials, but we don't want to send them?
-            if (!$safeCurl->getOptions()->getSendCredentials() &&
-                (array_key_exists('user', $url) || array_key_exists('pass', $url))) {
-                throw new InvalidURLException("Credentials passed in but 'sendCredentials' is set to false");
-            }
-
-            if ($safeCurl->getOptions()->getPinDns()) {
-                //Send a Host header
-                curl_setopt($curlHandle, CURLOPT_HTTPHEADER, array('Host: ' . $url['parts']['host']));
-                //The "fake" URL
-                curl_setopt($curlHandle, CURLOPT_URL, $url['cleanUrl']);
-                //We also have to disable SSL cert verfication, which is not great
-                //Might be possible to manually check the certificate ourselves?
-                curl_setopt($curlHandle, CURLOPT_SSL_VERIFYPEER, false);
-            } else {
-                curl_setopt($curlHandle, CURLOPT_URL, $url['cleanUrl']);
-            }
+			$safeCurl->prepare($url);
+            // in case of `CURLINFO_REDIRECT_URL` isn't defined
+            curl_setopt($curlHandle, CURLOPT_HEADER, true);
 
             //Execute the cURL request
             $response = curl_exec($curlHandle);
