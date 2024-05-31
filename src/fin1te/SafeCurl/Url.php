@@ -229,13 +229,18 @@ class Url {
     }
 
 	private static function getIps(string $hostname, int $recordType, string $ipField, int $ipType, array &$ips) : void {
-		$records = dns_get_record($hostname, $recordType);
-		if ($records === false)
-			return;
-		foreach ($records as $record) {
-			$ip = $record[$ipField] ?? null;
-			if ($ip !== null && strpos($ip, ',') === false)
-				$ips[] = new IpAddress($ip, $ipType);
+		try {
+			$records = dns_get_record($hostname, $recordType);
+			if ($records !== false) {
+				foreach ($records as $record) {
+					$ip = $record[$ipField] ?? null;
+					if ($ip !== null && strpos($ip, ',') === false)
+						$ips[] = new IpAddress($ip, $ipType);
+				}
+			}
+		}
+		catch (Throwable $t) {
+			// In some environments, dns_get_record may trigger an exception instead of returning false
 		}
 	}
 
