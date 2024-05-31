@@ -6,6 +6,7 @@ use fin1te\SafeCurl\Exception\InvalidURLException\InvalidDomainException;
 use fin1te\SafeCurl\Exception\InvalidURLException\InvalidIPException;
 use fin1te\SafeCurl\Exception\InvalidURLException\InvalidPortException;
 use fin1te\SafeCurl\Exception\InvalidURLException\InvalidSchemeException;
+use Throwable;
 
 class Url {
     /**
