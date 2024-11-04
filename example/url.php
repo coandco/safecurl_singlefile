@@ -4,10 +4,10 @@
  *
  * Using SafeCurl\Url to only valid a URL
  */
-require '../vendor/autoload.php';
+require 'SafeCurl.php';
 
-use fin1te\SafeCurl\Options;
-use fin1te\SafeCurl\Url;
+use SafeCurl\Options;
+use SafeCurl\Url;
 
 try {
     $safeUrl = Url::validateUrl('http://google.com', new Options());

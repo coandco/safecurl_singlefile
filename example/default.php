@@ -1,12 +1,7 @@
 <?php
-/*
- * default.php
- *
- * Using SafeCurl with it's default options
- */
-require '../vendor/autoload.php';
+require 'SafeCurl.php''
 
-use fin1te\SafeCurl\SafeCurl;
+use SafeCurl\SafeCurl;
 
 try {
     $curlHandle = curl_init();

@@ -12,27 +12,15 @@ If you chose to enable "FOLLOWLOCATION", then any redirects are caught, and re-v
 
 ## Installation
 
-SafeCurl can be included in any PHP project using [Composer](https://getcomposer.org). Include the following in your `composer.json` file under `require`.
-
-```
-    "require": {
-        "fin1te\safecurl": "~1"
-    }
-```
-
-Then update Composer.
-
-```
-composer update
-```
+SafeCurl can be included in any PHP project by using `require_once path/to/SafeCurl.php;`.
 
 ## Usage
 
 It's as easy as replacing `curl_exec` with `SafeCurl::execute`, and wrapping it in a `try {} catch {}` block.
 
 ```php
-use fin1te\SafeCurl\SafeCurl;
-use fin1te\SafeCurl\Exception;
+use SafeCurl\SafeCurl;
+use SafeCurl\Exception;
 
 try {
     $url = 'http://www.google.com';
@@ -56,7 +44,7 @@ If you wish to add your own options (such as to blacklist any requests to domain
 Domains are express using regex syntax, whilst IPs, scheme and ports are standard strings (IPs can be specified in [CIDR notation](https://en.wikipedia.org/wiki/Cidr)).
 
 ```php
-use fin1te\SafeCurl\Options;
+use SafeCurl\Options;
 
 $options = new Options();
 $options->addToList('blacklist', 'domain', '(.*)\.fin1te\.net');
@@ -83,7 +71,7 @@ $options->setFollowLocationLimit(10);
 The URL checking methods are also public, meaning that you can validate a URL before using it elsewhere in your application, although you'd want to try and catch any redirects.
 
 ```php
-use fin1te\SafeCurl\Url;
+use SafeCurl\Url;
 
 try {
     $url = 'http://www.google.com';
@@ -117,17 +105,5 @@ $options->disableSendCredentials();
 $response = SafeCurl::execute('http://user:pass@google.com', $curlHandle, $options);
 ```
 
-#### Cavets
-Since SafeCurl uses `getaddrbyhostl` to resolve domain names, which isn't IPv6 compatible, the class will only work with IPv4 at the moment. See [Issue #1](https://github.com/fin1te/safecurl/issues/1).
-
+#### Caveats
 As mentioned above, we can't fetch the value of any cURL options set against the provided cURL handle. Because SafeCurl handles redirects itself, it will turn off `CURLOPT_FOLLOWLOCATION` and use the value from the `Options` object. This is also true of `CURLOPT_MAXREDIRECTS`.
-
-## Demo
-
-A live demo is available at [http://safecurl.fin1te.net/#demo](http://safecurl.fin1te.net/#demo). For the site source code (if you're curious), it's hosted at [fin1te/safecurl.fin1te.net](https://github.com/fin1te/safecurl.fin1te.net).
-
-## Bounty
-
-In order to help make SafeCurl secure and ready for production use, [a Bitcoin bounty](http://safecurl.fin1te.net/#bounty) has been setup. 
-
-Inside the document root is a [Bitcoin wallet](http://safecurl.fin1te.net/btc.txt), which is only accessible by 127.0.0.1. If you can bypass the protections and grab the file, you're free to take the Bitcoins.

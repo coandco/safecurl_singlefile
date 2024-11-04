@@ -4,10 +4,10 @@
  *
  * Using SafeCurl and following redirects with a limit
  */
-require '../vendor/autoload.php';
+require 'SafeCurl.php';
 
-use fin1te\SafeCurl\SafeCurl;
-use fin1te\SafeCurl\Options;
+use SafeCurl\SafeCurl;
+use SafeCurl\Options;
 
 try {
     $curlHandle = curl_init();
